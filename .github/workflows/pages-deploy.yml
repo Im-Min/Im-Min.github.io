@@ -1,15 +1,9 @@
-name: "Build and Deploy"
+name: Deploy Hugo site to Pages
+
 on:
   push:
     branches:
-      - main
-      - master
-    paths-ignore:
-      - .gitignore
-      - README.md
-      - LICENSE
-
-  # Allows you to run this workflow manually from the Actions tab
+      - main  # 브랜치 이름 (master라면 master로 변경)
   workflow_dispatch:
 
 permissions:
@@ -17,7 +11,6 @@ permissions:
   pages: write
   id-token: write
 
-# Allow one concurrent deployment
 concurrency:
   group: "pages"
   cancel-in-progress: true
@@ -25,41 +18,28 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          submodules: recursive  # 중요: 테마(PaperMod)를 가져오기 위해 필수
           fetch-depth: 0
-          # submodules: true
-          # If using the 'assets' git submodule from Chirpy Starter, uncomment above
-          # (See: https://github.com/cotes2020/chirpy-starter/tree/main/assets)
 
-      - name: Setup Pages
-        id: pages
-        uses: actions/configure-pages@v4
-
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v2
         with:
-          ruby-version: 3.3
-          bundler-cache: true
+          hugo-version: 'latest'
+          extended: true  # 중요: PaperMod 테마는 extended 버전 필수
 
       - name: Build site
-        run: bundle exec jekyll b -d "_site${{ steps.pages.outputs.base_path }}"
-        env:
-          JEKYLL_ENV: "production"
-
-      - name: Test site
-        run: |
-          bundle exec htmlproofer _site \
-            \-\-disable-external \
-            \-\-ignore-urls "/^http:\/\/127.0.0.1/,/^http:\/\/0.0.0.0/,/^http:\/\/localhost/"
+        run: hugo --minify
+        # Jekyll 명령어(bundle exec...) 대신 Hugo 명령어를 사용합니다.
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "_site${{ steps.pages.outputs.base_path }}"
+          path: ./public 
+          # 중요: Jekyll은 _site 폴더를 쓰지만, Hugo는 public 폴더를 씁니다.
 
   deploy:
     environment:
