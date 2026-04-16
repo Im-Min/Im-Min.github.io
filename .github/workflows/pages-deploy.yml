@@ -3,7 +3,7 @@ name: Deploy Hugo site to Pages
 on:
   push:
     branches:
-      - main  # 브랜치 이름 (master라면 master로 변경)
+      - main
   workflow_dispatch:
 
 permissions:
@@ -18,28 +18,32 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      HUGO_VERSION: 0.147.2
     steps:
+      - name: Install Hugo CLI
+        run: |
+          wget -O ${{ runner.temp }}/hugo.deb \
+            https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.deb \
+          && sudo dpkg -i ${{ runner.temp }}/hugo.deb
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: recursive  # 중요: 테마(PaperMod)를 가져오기 위해 필수
+          submodules: recursive
           fetch-depth: 0
 
-      - name: Setup Hugo
-        uses: peaceiris/actions-hugo@v2
-        with:
-          hugo-version: 'latest'
-          extended: true  # 중요: PaperMod 테마는 extended 버전 필수
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v5
 
       - name: Build site
-        run: hugo --minify
-        # Jekyll 명령어(bundle exec...) 대신 Hugo 명령어를 사용합니다.
+        run: hugo --minify --baseURL "${{ steps.pages.outputs.base_url }}/"
 
-      - name: Upload site artifact
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./public 
-          # 중요: Jekyll은 _site 폴더를 쓰지만, Hugo는 public 폴더를 씁니다.
+          path: ./public
 
   deploy:
     environment:
