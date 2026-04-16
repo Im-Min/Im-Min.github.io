@@ -1,3 +1,10 @@
++++
+title = 'seL4 스터디'
+date = 2026-02-10T09:41:46+09:00
+draft = false
+tags = ['seL4', 'OS', 'kernel']
++++
+
 ## Chapter 1
 
 Operating System으로써의 seL4
